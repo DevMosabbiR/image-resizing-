@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>E-commerce Image Optimizer</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --primary: #2563eb;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #16a34a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 760px;
+      background: var(--card-bg);
+      padding: 32px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    input[type="number"], select {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+      outline: none;
+    }
+
+    .dropzone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      background: #f1f5f9;
+      transition: all 0.2s ease;
+    }
+
+    .dropzone:hover {
+      border-color: var(--primary);
+      background: #eff6ff;
+    }
+
+    .dropzone p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    .result-list {
+      margin-top: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .image-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      gap: 12px;
+    }
+
+    .thumb-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .thumb-info img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .info-text {
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .info-text .filename {
+      font-weight: 600;
+      color: var(--text);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .info-text .stats {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .stats .reduced {
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    .btn-download {
+      padding: 8px 16px;
+      background-color: var(--primary);
+      color: white;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 6px;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+
+    .btn-download:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>ইমেজ অপটিমাইজার (WebP)</h1>
+    <p class="subtitle">ই-কমার্সের জন্য ছবি আপলোড করুন এবং ৫০KB-এর নিচে WebP তে রূপান্তর করুন।</p>
+
+    <div class="controls">
+      <div class="control-group">
+        <label for="targetKb">টার্গেট সাইজ (KB)</label>
+        <input type="number" id="targetKb" value="50" min="10" max="500" />
+      </div>
+      <div class="control-group">
+        <label for="maxWidth">সর্বোচ্চ প্রস্থ (Max Width)</label>
+        <select id="maxWidth">
+          <option value="1200" selected>1200px (প্রোডাক্ট পেজের জন্য সেরা)</option>
+          <option value="800">800px (গ্রিড/কার্ডের জন্য)</option>
+          <option value="1600">1600px (বড় ব্যানার)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <strong>ছবি সিলেক্ট করুন বা ড্র্যাগ করে ছাড়ুন</strong>
+      <p>JPG, PNG বা অন্যান্য ফরম্যাট সাপোর্ট করবে</p>
+      <input type="file" id="fileInput" accept="image/*" multiple />
+    </div>
+
+    <div class="result-list" id="resultList"></div>
+  </div>
+
+  <script>
+    const dropzone = document.getElementById("dropzone");
+    const fileInput = document.getElementById("fileInput");
+    const resultList = document.getElementById("resultList");
+    const targetKbInput = document.getElementById("targetKb");
+    const maxWidthInput = document.getElementById("maxWidth");
+
+    dropzone.addEventListener("click", () => fileInput.click());
+
+    dropzone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = "#2563eb";
+    });
+
+    dropzone.addEventListener("dragleave", () => {
+      dropzone.style.borderColor = "#cbd5e1";
+    });
+
+    dropzone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = "#cbd5e1";
+      if (e.dataTransfer.files.length) {
+        handleFiles(e.dataTransfer.files);
+      }
+    });
+
+    fileInput.addEventListener("change", (e) => {
+      if (e.target.files.length) {
+        handleFiles(e.target.files);
+      }
+    });
+
+    function handleFiles(files) {
+      Array.from(files).forEach((file) => {
+        if (file.type.startsWith("image/")) {
+          processImage(file);
+        }
+      });
+    }
+
+    async function processImage(file) {
+      const targetKB = parseFloat(targetKbInput.value) || 50;
+      const maxDim = parseInt(maxWidthInput.value, 10) || 1200;
+      const origSizeKB = (file.size / 1024).toFixed(1);
+
+      const bitmap = await createImageBitmap(file);
+      
+      // Calculate aspect ratio resize
+      let width = bitmap.width;
+      let height = bitmap.height;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(bitmap, 0, 0, width, height);
+
+      // Binary Search to reach <= targetKB
+      let low = 0.1;
+      let high = 0.95;
+      let bestBlob = null;
+
+      for (let i = 0; i < 6; i++) {
+        const quality = (low + high) / 2;
+        const blob = await new Promise((resolve) =>
+          canvas.toBlob(resolve, "image/webp", quality)
+        );
+
+        if (blob.size / 1024 <= targetKB) {
+          bestBlob = blob;
+          low = quality; // Try better quality
+        } else {
+          high = quality; // Reduce quality
+        }
+      }
+
+      if (!bestBlob) {
+        bestBlob = await new Promise((resolve) =>
+          canvas.toBlob(resolve, "image/webp", 0.15)
+        );
+      }
+
+      const optSizeKB = (bestBlob.size / 1024).toFixed(1);
+      const outputUrl = URL.createObjectURL(bestBlob);
+      const baseName = file.name.replace(/\.[^/.]+$/, "");
+
+      displayResult(baseName, outputUrl, origSizeKB, optSizeKB);
+    }
+
+    function displayResult(name, url, origKB, newKB) {
+      const item = document.createElement("div");
+      item.className = "image-item";
+      item.innerHTML = `
+        <div class="thumb-info">
+          <img src="${url}" alt="Preview" />
+          <div class="info-text">
+            <span class="filename">${name}.webp</span>
+            <span class="stats">আগের সাইজ: ${origKB} KB &rarr; <span class="reduced">${newKB} KB</span></span>
+          </div>
+        </div>
+        <a href="${url}" download="${name}.webp" class="btn-download">ডাউনলোড</a>
+      `;
+      resultList.prepend(item);
+    }
+  </script>
+</body>
+</html>
